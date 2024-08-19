@@ -30,6 +30,11 @@ def main():
     print(f"Time without JIT: {time_default}")
     print(f"Time with JIT: {time_jit}")
     print(f"Speedup: {time_default / time_jit}")
+    key, subkey = random.split(key)
+    x2 = random.normal(subkey, (1_000_000,))
+    time_jit2 = measure_time(selu_jit, x2)
+    print(f"Time with JIT (diff input): {time_jit2}")
+    print(f"Speedup: {time_default / time_jit2}")
 
     # 03 Grad
     derivative_fn = jit(grad(sum_logistic))
