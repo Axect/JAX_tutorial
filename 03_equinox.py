@@ -12,15 +12,14 @@ class MLP(eqx.Module):
     layers: list
     extra_bias: Array
 
-    def __init__(self, in_size, hidden_size, out_size, key):
-        keys = random.split(key, 4)
+    def __init__(self, sizes, key):
+        keys = random.split(key, len(sizes)-1)
         layers = []
-        for key in keys[:-1]:
-            layers.append(eqx.nn.Linear(in_size, hidden_size, key=key))
-            in_size = hidden_size
-        layers.append(eqx.nn.Linear(in_size, out_size, key=keys[-1]))
+        for i, key in enumerate(keys[:-1]):
+            layers.append(eqx.nn.Linear(sizes[i], sizes[i + 1], key=key))
+        layers.append(eqx.nn.Linear(sizes[-2], sizes[-1], key=keys[-1]))
         self.layers = layers
-        self.extra_bias = jnp.ones(out_size)
+        self.extra_bias = jnp.ones(sizes[-1])
 
     def __call__(self, x):
         for layer in self.layers[:-1]:
@@ -34,11 +33,11 @@ def loss_fn(model, x, y):
     return jnp.mean((y - pred_y) ** 2)
 
 
-batch_size, in_size, out_size = 1000, 1, 1
-hidden_size = 16
+batch_size = 1000
+sizes = [1, 32, 32, 1]
 x_key, model_key = random.split(random.PRNGKey(0))
-model = MLP(in_size, hidden_size, out_size, model_key)
-x = random.uniform(x_key, (batch_size, in_size), minval=0.0, maxval=jnp.pi * 2)
+model = MLP(sizes, model_key)
+x = random.uniform(x_key, (batch_size, 1), minval=0.0, maxval=jnp.pi * 2)
 y = jnp.sin(x)
 
 print("Baseline: ", loss_fn(model, x, y))
