@@ -51,7 +51,9 @@ def create_exp_hyperbolic_lr_schedule(upper_bound, max_iter, init_lr, infimum_lr
 
 
 class MLP(eqx.Module):
-    layers: list
+    # layers only contain eqx.nn.Linear (do not contain activation functions - i.e. jax.nn.gelu)
+    # if containing activation functions, optax can't be used to optimize the model
+    layers: list 
 
     def __init__(self, hparams, key):
         width = hparams["width"]
