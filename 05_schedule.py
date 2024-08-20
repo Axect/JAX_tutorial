@@ -53,7 +53,6 @@ def create_exp_hyperbolic_lr_schedule(upper_bound, max_iter, init_lr, infimum_lr
 
 class MLP(eqx.Module):
     layers: list
-    extra_bias: Array
 
     def __init__(self, sizes, key):
         keys = random.split(key, len(sizes)-1)
@@ -62,12 +61,11 @@ class MLP(eqx.Module):
             layers.append(eqx.nn.Linear(sizes[i], sizes[i + 1], key=key))
         layers.append(eqx.nn.Linear(sizes[-2], sizes[-1], key=keys[-1]))
         self.layers = layers
-        self.extra_bias = jnp.ones(sizes[-1])
 
     def __call__(self, x):
         for layer in self.layers[:-1]:
             x = jax.nn.gelu(layer(x))
-        return self.layers[-1](x) + self.extra_bias
+        return self.layers[-1](x)
 
 
 @jit
