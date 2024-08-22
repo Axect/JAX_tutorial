@@ -100,7 +100,6 @@ def loss_fn(model, x, y):
 
 def dataloader(x, y, batch_size):
     indices = np.arange(len(x))
-    np.random.seed(42)
     while True:
         perm = np.random.permutation(indices)
         start = 0
@@ -129,6 +128,7 @@ def main(
     depth=3,
     seed=42
     ):
+    np.random.seed(seed)
     data_key, model_key = random.split(random.PRNGKey(seed), 2)
 
     x, y = create_data(dataset_size, data_key)

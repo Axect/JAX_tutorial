@@ -4,8 +4,8 @@ import equinox as eqx
 
 from model import MLP
 
+import numpy as np
 import json
-
 
 
 def save(model, hparams, path):
@@ -23,3 +23,11 @@ def load(path):
         model = MLP(hparams, key)
         return eqx.tree_deserialise_leaves(f, model)
 
+
+def dataloader(x, y, batch_size):
+    indices = np.arange(x.shape[0])
+    while True:
+        perm = np.random.permutation(indices)
+        for start in range(0, len(perm), batch_size):
+            idx = perm[start:start + batch_size]
+            yield x[idx], y[idx]
