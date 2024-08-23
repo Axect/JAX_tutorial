@@ -45,7 +45,7 @@ def create_data(dataset_size, key):
 class Trainer:
     def __init__(self, model, optimizer, scheduler, loss_fn):
         self.model = model
-        self.optim = optax.adamw(learning_late=scheduler)
+        self.optim = optimizer(learning_late=scheduler)
         self.scheduler = scheduler
         self.loss_fn = loss_fn
 
