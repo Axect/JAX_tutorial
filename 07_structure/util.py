@@ -37,7 +37,7 @@ def dataloader(x, y, batch_size):
 def create_data(dataset_size, key):
     x = jnp.linspace(0, 2 * jnp.pi, dataset_size)
     x = x.reshape((dataset_size, 1))
-    epsilon = jnp.random.normal(key, x.shape) * 0.01
+    epsilon = jax.random.normal(key, x.shape) * 0.01
     y = jnp.sin(x) + epsilon
     return x, y
 
