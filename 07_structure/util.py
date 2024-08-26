@@ -45,36 +45,24 @@ def create_data(dataset_size, key):
 class Trainer:
     def __init__(self, model, optimizer, scheduler, loss_fn):
         self.model = model
-        self.optim = optimizer(learning_late=scheduler)
-        self.scheduler = scheduler
+        self.scheduler = scheduler.gen_scheduler()
+        self.optim = optimizer(learning_rate=self.scheduler)
         self.loss_fn = loss_fn
 
-    @eqx.filter_value_and_grad
-    def compute_loss(self, x, y):
-        pred_y = jax.vmap(self.model)(x)
-        loss = self.loss_fn(pred_y, y)
-        return loss
-
     @eqx.filter_jit
-    def train_epoch(self, x, y, opt_state):
-        loss, grads = self.compute_loss(x, y)
-        updates, opt_state = self.optim.update(grads, opt_state)
-        model = eqx.apply_updates(self.model, updates)
+    def train_epoch(self, model, x, y, opt_state):
+        loss, grads = self.loss_fn(model, x, y)
+        updates, opt_state = self.optim.update(grads, opt_state, params=model)
+        model = eqx.apply_updates(model, updates)
         return loss, model, opt_state
-
-    @eqx.filter_jit
-    def val_epoch(self, x, y):
-        pred_y = jax.vmap(self.model)(x)
-        loss = self.loss_fn(pred_y, y)
-        return loss
 
     def train(self, epochs, dl_train, dl_val):
         model = self.model
         opt_state = self.optim.init(model)
 
         for epoch, (x, y), (val_x, val_y) in zip(range(epochs), dl_train, dl_val):
-            loss, model, opt_state = self.train_epoch(x, y, opt_state)
-            val_loss = self.val_epoch(val_x, val_y)
-            wandb.log({"loss": loss, "val_loss": val_loss, "lr": self.scheduler(epoch)})
+            loss, model, opt_state = self.train_epoch(model, x, y, opt_state)
+            val_loss, _ = self.loss_fn(model, val_x, val_y)
+            wandb.log({"train_loss": loss, "val_loss": val_loss, "lr": self.scheduler(epoch)})
 
-        self.model = model
+        return model

@@ -123,6 +123,7 @@ six==1.16.0
     #   python-dateutil
 smmap==5.0.1
     # via gitdb
+survey==5.4.0
 toolz==0.12.1
     # via chex
 typeguard==2.13.3
