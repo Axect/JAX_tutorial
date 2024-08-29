@@ -18,7 +18,7 @@ import argparse
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_size", type=int, default=10000)
-    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--batch_size", type=int, default=250)
     parser.add_argument("--epochs", type=int, default=1000)
     parser.add_argument("--lr", type=float, default=0.01)
     parser.add_argument("--width", type=int, default=16)
@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     
     args = parser.parse_args()
+    wandb.require("core")
 
     np.random.seed(args.seed)
     train_key, val_key, model_key = jax.random.split(jax.random.PRNGKey(args.seed), 3)
@@ -33,8 +34,8 @@ def main():
     x_train, y_train = create_data(args.dataset_size, train_key)
     x_val, y_val = create_data(args.dataset_size, val_key)
 
-    dl_train = dataloader(x_train, y_train, args.batch_size)
-    dl_val = dataloader(x_val, y_val, args.batch_size)
+    #dl_train = dataloader(x_train, y_train, args.batch_size)
+    #dl_val = dataloader(x_val, y_val, args.batch_size)
 
     hparams = {
         "width": args.width,
@@ -47,7 +48,7 @@ def main():
     max_iter = args.epochs
     init_lr = args.lr
     infimum_lr = survey.routines.numeric("Input infimum_lr", decimal=True)
-    scheduler = HyperbolicLR(upper_bound, max_iter, init_lr, infimum_lr)
+    scheduler = ExpHyperbolicLR(upper_bound, max_iter, init_lr, infimum_lr)
 
     # Initialize wandb
     wandb.init(
@@ -62,12 +63,12 @@ def main():
 
     trainer = Trainer(
         model=model,
-        optimizer=optax.adamw,
+        optimizer=optax.inject_hyperparams(optax.adamw)(learning_rate=args.lr),
         scheduler=scheduler,
         loss_fn=loss_fn
     )
 
-    model = trainer.train(args.epochs, dl_train, dl_val)
+    model = trainer.train(args.epochs, x_train, y_train, x_val, y_val, args.batch_size)
 
     save(model, hparams, "model.eqx")
 
