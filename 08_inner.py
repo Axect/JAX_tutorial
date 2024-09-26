@@ -40,3 +40,8 @@ print(f"y_vec: {y_vec}")
 print(f"x_mat * y_vec: {mv(x_mat, y_vec)}")
 print(f"y_mat:\n {y_mat}")
 print(f"x_mat * y_mat:\n {mm(x_mat, y_mat)}")
+
+A = jnp.arange(200).reshape(100, 2)
+B = jnp.arange(300).reshape(150, 2)
+C = jax.numpy.einsum("ij,kj->ik", A, B)
+print(C.shape)
